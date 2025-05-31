@@ -212,15 +212,9 @@ namespace Projekt
             SetLightPosition();
             SetViewerPosition();
             SetShininess();
-
-            //DrawPulsingTeapot();
-
-            //DrawSphere();
-
-            DrawPlate();
-
-            DrawRevolvingCube();
-
+            
+            DrawSphere();
+            
             DrawSkyBox();
 
             //ImGuiNET.ImGui.ShowDemoWindow();
@@ -259,33 +253,6 @@ namespace Projekt
             CheckError();
             Gl.BindTexture(TextureTarget.Texture2D, 0);
             CheckError();
-        }
-
-        private static unsafe void DrawPlate()
-        {
-            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(0, 0f, 0f);
-            SetModelMatrix(modelMatrix);
-            Gl.BindVertexArray(glPlate.Vao);
-
-            //int textureLocation = Gl.GetUniformLocation(program, TextureUniformVariableName);
-            //if (textureLocation == -1)
-            //{
-            //    throw new Exception($"{TextureUniformVariableName} uniform not found on shader.");
-            //}
-            //// set texture 0
-            //Gl.Uniform1(textureLocation, 0);
-
-            //Gl.ActiveTexture(TextureUnit.Texture0);
-            //Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)GLEnum.Linear);
-            //Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)GLEnum.Linear);
-            //Gl.BindTexture(TextureTarget.Texture2D, skyBox.Texture.Value);
-
-            Gl.DrawElements(GLEnum.Triangles, glPlate.IndexArrayLength, GLEnum.UnsignedInt, null);
-            Gl.BindVertexArray(0);
-
-            CheckError();
-            //Gl.BindTexture(TextureTarget.Texture2D, 0);
-            //CheckError();
         }
 
         private static unsafe void DrawSphere()
@@ -367,42 +334,7 @@ namespace Projekt
             Gl.Uniform1(location, Shininess);
             CheckError();
         }
-
-        private static unsafe void DrawRevolvingCube()
-        {
-            // set material uniform to metal
-
-            Matrix4X4<float> diamondScale = Matrix4X4.CreateScale(1f);
-            Matrix4X4<float> rotx = Matrix4X4.CreateRotationX((float)Math.PI / 4f);
-            Matrix4X4<float> rotz = Matrix4X4.CreateRotationZ((float)Math.PI / 4f);
-            Matrix4X4<float> rotLocY = Matrix4X4.CreateRotationY((float)cubeArrangementModel.DiamondCubeAngleOwnRevolution);
-            Matrix4X4<float> trans = Matrix4X4.CreateTranslation(4f, 4f, 0f);
-            Matrix4X4<float> rotGlobY = Matrix4X4.CreateRotationY((float)cubeArrangementModel.DiamondCubeAngleRevolutionOnGlobalY);
-            Matrix4X4<float> modelMatrix = diamondScale * rotx * rotz * rotLocY * trans * rotGlobY;
-
-            SetModelMatrix(modelMatrix);
-            Gl.BindVertexArray(glCubeRotating.Vao);
-            Gl.DrawElements(GLEnum.Triangles, glCubeRotating.IndexArrayLength, GLEnum.UnsignedInt, null);
-            Gl.BindVertexArray(0);
-        }
-
-        private static unsafe void DrawPulsingTeapot()
-        {
-            // set material uniform to rubber
-
-            var modelMatrixForCenterCube = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale);
-            SetModelMatrix(modelMatrixForCenterCube);
-            Gl.BindVertexArray(teapot.Vao);
-            Gl.DrawElements(GLEnum.Triangles, teapot.IndexArrayLength, GLEnum.UnsignedInt, null);
-            Gl.BindVertexArray(0);
-
-            //var modelMatrixForTable = Matrix4X4.CreateScale(1f, 1f, 1f);
-            //SetModelMatrix(modelMatrixForTable);
-            //Gl.BindVertexArray(table.Vao);
-            //Gl.DrawElements(GLEnum.Triangles, table.IndexArrayLength, GLEnum.UnsignedInt, null);
-            //Gl.BindVertexArray(0);
-        }
-
+        
         private static unsafe void SetModelMatrix(Matrix4X4<float> modelMatrix)
         {
             int location = Gl.GetUniformLocation(program, ModelMatrixVariableName);
@@ -455,12 +387,9 @@ namespace Projekt
             skyBox = GlCube.CreateInteriorCube(Gl, "");
 
             glSphere = GlObject.CreateSphere(5.0f, Gl);
-
-            glPlate = GlObject.CreateChalice(Gl);
+            
         }
-
         
-
         private static void Window_Closing()
         {
             teapot.ReleaseGlObject();

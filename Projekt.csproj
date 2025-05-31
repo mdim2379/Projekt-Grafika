@@ -17,6 +17,10 @@
 
     <ItemGroup>
       <EmbeddedResource Include="Resources\skybox.png" />
+      <None Remove="Resources\teapot.obj" />
+      <None Remove="Resources\minicooper.obj" />
+      <None Remove="Resources\GOOSE.OBJ" />
+      <EmbeddedResource Include="Resources\goose.obj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -26,8 +30,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Resources\teapot.obj" />
-      <EmbeddedResource Include="Resources\teapot.obj" />
       <None Remove="Resources\skybox.png" />
       <None Remove="Shaders\FragmentShader.frag" />
       <EmbeddedResource Include="Shaders\FragmentShader.frag" />
