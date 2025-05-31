@@ -97,8 +97,9 @@ namespace Projekt
 
             LinkProgram();
 
-            Gl.Enable(EnableCap.CullFace);
-
+            // Gl.Enable(EnableCap.CullFace);
+            Gl.PolygonMode(GLEnum.FrontAndBack, GLEnum.Line);
+            
             Gl.Enable(EnableCap.DepthTest);
             Gl.DepthFunc(DepthFunction.Lequal);
         }
@@ -246,29 +247,14 @@ namespace Projekt
 
         private static unsafe void DrawSphere()
         {
-            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(10f, 0f, 0f);
+            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(0f, 5f, 0f);
             SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(glSphere.Vao);
-
-            //int textureLocation = Gl.GetUniformLocation(program, TextureUniformVariableName);
-            //if (textureLocation == -1)
-            //{
-            //    throw new Exception($"{TextureUniformVariableName} uniform not found on shader.");
-            //}
-            //// set texture 0
-            //Gl.Uniform1(textureLocation, 0);
-
-            //Gl.ActiveTexture(TextureUnit.Texture0);
-            //Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)GLEnum.Linear);
-            //Gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)GLEnum.Linear);
-            //Gl.BindTexture(TextureTarget.Texture2D, skyBox.Texture.Value);
 
             Gl.DrawElements(GLEnum.Triangles, glSphere.IndexArrayLength, GLEnum.UnsignedInt, null);
             Gl.BindVertexArray(0);
 
             CheckError();
-            //Gl.BindTexture(TextureTarget.Texture2D, 0);
-            //CheckError();
         }
 
         private static unsafe void DrawGoose()
@@ -404,7 +390,7 @@ namespace Projekt
             float[] face5Color = [0.0f, 1.0f, 1.0f, 1.0f];
             float[] face6Color = [1.0f, 1.0f, 0.0f, 1.0f];
 
-            teapot = ObjResourceReader.CreateTeapotWithColor(Gl, face1Color);
+            teapot = ObjLoader.CreateFromObj(Gl, "Projekt.Resources.goose.obj", "Projekt.Resources.goose.png");
 
             float[] tableColor = [System.Drawing.Color.Ivory.R/256f,
                                   System.Drawing.Color.Ivory.G/256f,

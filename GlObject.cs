@@ -3,13 +3,15 @@ using Silk.NET.OpenGL;
 
 namespace Projekt
 {
-    internal class GlObject
+    public class GlObject
     {
         public uint Vao { get; }
         public uint Vertices { get; }
         public uint Colors { get; }
         public uint Indices { get; }
         public uint IndexArrayLength { get; }
+        
+        public uint TextureId { get; set; } = 0;
 
         private GL Gl;
 
