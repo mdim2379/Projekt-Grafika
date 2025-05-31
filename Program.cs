@@ -78,10 +78,7 @@ namespace Projekt
 
             // set up input handling
             inputContext = window.CreateInput();
-            foreach (var keyboard in inputContext.Keyboards)
-            {
-                keyboard.KeyDown += Keyboard_KeyDown;
-            }
+            KeyStateTracker.Initialize(inputContext);
 
             Gl = window.CreateOpenGL();
 
@@ -111,6 +108,32 @@ namespace Projekt
                 eltolas[i] = random.Next(180 - 2 * 5);
         }
 
+        public static class KeyStateTracker
+        {
+            private static readonly HashSet<Key> _pressedKeys = new();
+
+            public static void Initialize(IInputContext inputContext)
+            {
+                foreach (var keyboard in inputContext.Keyboards)
+                {
+                    keyboard.KeyDown += OnKeyDown;
+                    keyboard.KeyUp += OnKeyUp;
+                }
+            }
+
+            private static void OnKeyDown(IKeyboard keyboard, Key key, int arg3)
+            {
+                _pressedKeys.Add(key);
+            }
+
+            private static void OnKeyUp(IKeyboard keyboard, Key key, int arg3)
+            {
+                _pressedKeys.Remove(key);
+            }
+
+            public static bool IsKeyDown(Key key) => _pressedKeys.Contains(key);
+        }
+        
         private static void LinkProgram()
         {
             uint vshader = Gl.CreateShader(ShaderType.VertexShader);
@@ -146,35 +169,7 @@ namespace Projekt
             using (StreamReader shaderReader = new StreamReader(shaderStream))
                 return shaderReader.ReadToEnd();
         }
-
-        private static void Keyboard_KeyDown(IKeyboard keyboard, Key key, int arg3)
-        {
-            switch (key)
-            {
-                case Key.Left:
-                    cameraDescriptor.DecreaseZYAngle();
-                    break;
-                    ;
-                case Key.Right:
-                    cameraDescriptor.IncreaseZYAngle();
-                    break;
-                case Key.Down:
-                    cameraDescriptor.IncreaseDistance();
-                    break;
-                case Key.Up:
-                    cameraDescriptor.DecreaseDistance();
-                    break;
-                case Key.U:
-                    cameraDescriptor.IncreaseZXAngle();
-                    break;
-                case Key.D:
-                    cameraDescriptor.DecreaseZXAngle();
-                    break;
-                case Key.Space:
-                    cubeArrangementModel.AnimationEnabeld = !cubeArrangementModel.AnimationEnabeld;
-                    break;
-            }
-        }
+        
 
         private static void Window_Update(double deltaTime)
         {
@@ -183,6 +178,10 @@ namespace Projekt
             // make sure it is threadsafe
             // NO GL calls
             cubeArrangementModel.AdvanceTime(deltaTime);
+            if (KeyStateTracker.IsKeyDown(Key.Left))
+            {
+                Console.WriteLine("fasd");
+            }
         }
 
         private static unsafe void Window_Render(double deltaTime)
@@ -260,7 +259,7 @@ namespace Projekt
 
         private static unsafe void DrawSphere(int i, float x, float y)
         {
-            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x, 5f, y);
+            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x + glSphere[i].xEltolas, 5f, y + glSphere[i].yEltolas);
             SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(glSphere[i].Vao);
 
