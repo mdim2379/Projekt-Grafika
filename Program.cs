@@ -97,7 +97,7 @@ namespace Projekt
 
             LinkProgram();
 
-            //Gl.Enable(EnableCap.CullFace);
+            Gl.Enable(EnableCap.CullFace);
 
             Gl.Enable(EnableCap.DepthTest);
             Gl.DepthFunc(DepthFunction.Lequal);
@@ -175,8 +175,6 @@ namespace Projekt
             // make sure it is threadsafe
             // NO GL calls
             cubeArrangementModel.AdvanceTime(deltaTime);
-
-            controller.Update((float)deltaTime);
         }
 
         private static unsafe void Window_Render(double deltaTime)
@@ -213,18 +211,9 @@ namespace Projekt
             
             DrawSphere();
 
-            DrawPulsingTeapot();
+            DrawGoose();
             
             DrawSkyBox();
-
-            //ImGuiNET.ImGui.ShowDemoWindow();
-            ImGuiNET.ImGui.Begin("Lighting properties",
-                ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-            ImGuiNET.ImGui.SliderFloat("Shininess", ref Shininess, 1, 200);
-            ImGuiNET.ImGui.Checkbox("Draw only wireframe", ref DrawWireFrameOnly);
-            ImGuiNET.ImGui.End();
-
-
             controller.Render();
         }
 
@@ -282,12 +271,36 @@ namespace Projekt
             //CheckError();
         }
 
-        private static unsafe void DrawPulsingTeapot()
+        private static unsafe void DrawGoose()
         {
-            // set material uniform to rubber
+            var scale = Matrix4X4.CreateScale(50f);
+            float orbitRadius = 3f;
+            float orbitHeight = 2f;
+            float orbitSpeed = (float)cubeArrangementModel.CenterCubeOrbitAngle;
 
-            var modelMatrixForCenterCube = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale);
-            SetModelMatrix(modelMatrixForCenterCube);
+            float orbitX = orbitRadius * (float)Math.Sin(orbitSpeed * (float)Math.PI / 180.0f);
+            float orbitZ = orbitRadius * (float)Math.Cos(orbitSpeed * (float)Math.PI / 180.0f);
+
+            float nextAngle = orbitSpeed + 1f;
+            float nextX = orbitRadius * (float)Math.Sin(nextAngle * (float)Math.PI / 180.0f);
+            float nextZ = orbitRadius * (float)Math.Cos(nextAngle * (float)Math.PI / 180.0f);
+
+            float forwardX = nextX - orbitX;
+            float forwardZ = nextZ - orbitZ;
+
+            float faceAngle = (float)Math.Atan2(forwardX, forwardZ) * (180.0f / (float)Math.PI);
+
+            float wingFlap = (float)Math.Sin(orbitSpeed * 0.2f) * 0.3f;
+
+            float bankAngle = (float)Math.Sin(orbitSpeed * 0.1f) * 10f;
+            var bankRotation = Matrix4X4.CreateRotationZ(bankAngle * (float)Math.PI / 180.0f);
+
+            var bodyRotation = Matrix4X4.CreateRotationY(faceAngle * (float)Math.PI / 180.0f);
+
+            var orbit = Matrix4X4.CreateTranslation(orbitX, orbitHeight + wingFlap, orbitZ);
+
+            SetModelMatrix(orbit * bodyRotation * bankRotation * scale);
+
             Gl.BindVertexArray(teapot.Vao);
             Gl.DrawElements(GLEnum.Triangles, teapot.IndexArrayLength, GLEnum.UnsignedInt, null);
             Gl.BindVertexArray(0);
@@ -298,7 +311,7 @@ namespace Projekt
             Gl.DrawElements(GLEnum.Triangles, table.IndexArrayLength, GLEnum.UnsignedInt, null);
             Gl.BindVertexArray(0);
         }
-        
+
         private static unsafe void SetLightColor()
         {
             int location = Gl.GetUniformLocation(program, LightColorVariableName);
