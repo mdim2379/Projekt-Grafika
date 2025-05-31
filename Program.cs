@@ -9,6 +9,8 @@ namespace Projekt
 {
     internal static class Program
     {
+        private static Random random = new();
+        
         private static CameraDescriptor cameraDescriptor = new();
 
         private static CubeArrangementModel cubeArrangementModel = new();
@@ -31,7 +33,9 @@ namespace Projekt
 
         private static GlCube skyBox;
 
-        private static GlObject glSphere;
+        private static GlObject[] glSphere = new GlObject[10];
+        
+        private static int[] eltolas = new int[10];
 
         private static float Shininess = 50;
 
@@ -102,6 +106,9 @@ namespace Projekt
             
             Gl.Enable(EnableCap.DepthTest);
             Gl.DepthFunc(DepthFunction.Lequal);
+
+            for (int i = 0; i < 10; i++)
+                eltolas[i] = random.Next(180 - 2 * 5);
         }
 
         private static void LinkProgram()
@@ -210,7 +217,13 @@ namespace Projekt
             SetViewerPosition();
             SetShininess();
             
-            DrawSphere();
+            DrawSphere(0, 0 ,0);
+            
+            for (int i = 0; i < 10; i++) {
+                float y = -180.0f/2 + (i + 0.5f) * (180.0f / 10);
+                float x = -180.0f/2 + 5 + eltolas[i];
+                DrawSphere(i, x, y);
+            }
 
             DrawGoose();
             
@@ -245,13 +258,13 @@ namespace Projekt
             CheckError();
         }
 
-        private static unsafe void DrawSphere()
+        private static unsafe void DrawSphere(int i, float x, float y)
         {
-            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(0f, 5f, 0f);
+            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x, 5f, y);
             SetModelMatrix(modelMatrix);
-            Gl.BindVertexArray(glSphere.Vao);
+            Gl.BindVertexArray(glSphere[i].Vao);
 
-            Gl.DrawElements(GLEnum.Triangles, glSphere.IndexArrayLength, GLEnum.UnsignedInt, null);
+            Gl.DrawElements(GLEnum.Triangles, glSphere[i].IndexArrayLength, GLEnum.UnsignedInt, null);
             Gl.BindVertexArray(0);
 
             CheckError();
@@ -402,8 +415,8 @@ namespace Projekt
 
             skyBox = GlCube.CreateInteriorCube(Gl, "");
 
-            glSphere = GlObject.CreateSphere(5.0f, Gl);
-            
+            for (int i = 0; i < 10; i++)
+                glSphere[i] = GlObject.CreateSphere(5f, Gl);
         }
         
         private static void Window_Closing()
