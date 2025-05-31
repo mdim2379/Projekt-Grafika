@@ -33,8 +33,6 @@ namespace Projekt
 
         private static GlObject glSphere;
 
-        private static GlObject glPlate;
-
         private static float Shininess = 50;
 
         private static bool DrawWireFrameOnly = false;
@@ -214,6 +212,8 @@ namespace Projekt
             SetShininess();
             
             DrawSphere();
+
+            DrawPulsingTeapot();
             
             DrawSkyBox();
 
@@ -282,6 +282,23 @@ namespace Projekt
             //CheckError();
         }
 
+        private static unsafe void DrawPulsingTeapot()
+        {
+            // set material uniform to rubber
+
+            var modelMatrixForCenterCube = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale);
+            SetModelMatrix(modelMatrixForCenterCube);
+            Gl.BindVertexArray(teapot.Vao);
+            Gl.DrawElements(GLEnum.Triangles, teapot.IndexArrayLength, GLEnum.UnsignedInt, null);
+            Gl.BindVertexArray(0);
+
+            var modelMatrixForTable = Matrix4X4.CreateScale(1f, 1f, 1f);
+            SetModelMatrix(modelMatrixForTable);
+            Gl.BindVertexArray(table.Vao);
+            Gl.DrawElements(GLEnum.Triangles, table.IndexArrayLength, GLEnum.UnsignedInt, null);
+            Gl.BindVertexArray(0);
+        }
+        
         private static unsafe void SetLightColor()
         {
             int location = Gl.GetUniformLocation(program, LightColorVariableName);
@@ -376,9 +393,9 @@ namespace Projekt
 
             teapot = ObjResourceReader.CreateTeapotWithColor(Gl, face1Color);
 
-            float[] tableColor = [System.Drawing.Color.Azure.R/256f,
-                                  System.Drawing.Color.Azure.G/256f,
-                                  System.Drawing.Color.Azure.B/256f,
+            float[] tableColor = [System.Drawing.Color.Ivory.R/256f,
+                                  System.Drawing.Color.Ivory.G/256f,
+                                  System.Drawing.Color.Ivory.B/256f,
                                   1f];
             table = GlCube.CreateSquare(Gl, tableColor);
 
