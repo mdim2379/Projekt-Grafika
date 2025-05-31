@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Resources\skybox.png" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Silk.NET" Version="2.22.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.22.0" />
+      <PackageReference Include="StbImageSharp" Version="2.30.15" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Resources\teapot.obj" />
+      <EmbeddedResource Include="Resources\teapot.obj" />
+      <None Remove="Resources\skybox.png" />
+      <None Remove="Shaders\FragmentShader.frag" />
+      <EmbeddedResource Include="Shaders\FragmentShader.frag" />
+      <None Remove="Shaders\VertexShader.vert" />
+      <EmbeddedResource Include="Shaders\VertexShader.vert" />
+      <None Remove="Resources\skyboy.png" />
+    </ItemGroup>
+
+</Project>
