@@ -4,11 +4,11 @@ namespace Projekt
 {
     internal class CameraDescriptor
     {
-        private double DistanceToOrigin = 40;
-
+        public double DistanceToOrigin { get; set; } = 200;
+        
         private double AngleToZYPlane = 0;
 
-        private double AngleToZXPlane = 0.5;
+        private double AngleToZXPlane = Math.PI / 2;
 
         private const double DistanceScaleFactor = 1.1;
 

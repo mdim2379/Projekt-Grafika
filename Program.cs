@@ -9,9 +9,11 @@ namespace Projekt
 {
     internal static class Program
     {
+        private static int camera = 0;
+        
         private static Random random = new();
         
-        private static CameraDescriptor cameraDescriptor = new();
+        private static CameraDescriptor[] cams = new CameraDescriptor[2];
 
         private static CubeArrangementModel cubeArrangementModel = new();
 
@@ -56,10 +58,9 @@ namespace Projekt
         static void Main(string[] args)
         {
             WindowOptions windowOptions = WindowOptions.Default;
-            windowOptions.Title = "2 szeminárium";
+            windowOptions.Title = "Balls bonzana";
             windowOptions.Size = new Vector2D<int>(1000, 1000);
-
-            // on some systems there is no depth buffer by default, so we need to make sure one is created
+            
             windowOptions.PreferredDepthBufferBits = 24;
 
             window = Window.Create(windowOptions);
@@ -74,20 +75,16 @@ namespace Projekt
 
         private static void Window_Load()
         {
-            //Console.WriteLine("Load");
-
-            // set up input handling
+            
             inputContext = window.CreateInput();
             KeyStateTracker.Initialize(inputContext);
 
             Gl = window.CreateOpenGL();
 
             controller = new ImGuiController(Gl, window, inputContext);
-
-            // Handle resizes
+            
             window.FramebufferResize += s =>
             {
-                // Adjust the viewport to the new window size
                 Gl.Viewport(s);
             };
 
@@ -106,6 +103,9 @@ namespace Projekt
 
             for (int i = 0; i < 10; i++)
                 eltolas[i] = random.Next(180 - 2 * 5);
+
+            cams[0] = new CameraDescriptor();
+            cams[1] = new CameraDescriptor();
         }
 
         public static class KeyStateTracker
@@ -173,10 +173,8 @@ namespace Projekt
 
         private static void Window_Update(double deltaTime)
         {
-            //Console.WriteLine($"Update after {deltaTime} [s].");
-            // multithreaded
-            // make sure it is threadsafe
-            // NO GL calls
+            controller.Update((float)deltaTime);
+            
             cubeArrangementModel.AdvanceTime(deltaTime);
             if (KeyStateTracker.IsKeyDown(Key.D))
             {
@@ -240,6 +238,18 @@ namespace Projekt
             DrawGoose();
             
             DrawSkyBox();
+            if (ImGui.Button("switch"))
+            {
+                if(camera == 0)
+                    camera = 1;
+                else
+                {
+                    camera = 0;
+                }
+            }
+
+            cams[1].DistanceToOrigin = 100;
+            ImGuiNET.ImGui.End();
             controller.Render();
         }
 
@@ -359,7 +369,7 @@ namespace Projekt
                 throw new Exception($"{ViewPosVariableName} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, cameraDescriptor.Position.X, cameraDescriptor.Position.Y, cameraDescriptor.Position.Z);
+            Gl.Uniform3(location, cams[camera].Position.X, cams[camera].Position.Y, cams[camera].Position.Z);
             CheckError();
         }
 
@@ -453,7 +463,7 @@ namespace Projekt
 
         private static unsafe void SetViewMatrix()
         {
-            var viewMatrix = Matrix4X4.CreateLookAt(cameraDescriptor.Position, cameraDescriptor.Target, cameraDescriptor.UpVector);
+            var viewMatrix = Matrix4X4.CreateLookAt(cams[camera].Position, cams[camera].Target, cams[camera].UpVector);
             int location = Gl.GetUniformLocation(program, ViewMatrixVariableName);
 
             if (location == -1)
