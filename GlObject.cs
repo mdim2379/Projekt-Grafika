@@ -14,7 +14,7 @@ namespace Projekt
         public uint TextureId { get; set; } = 0;
 
         public float xEltolas { get; set; } = 0;
-        public float yEltolas { get; set; } = 0;
+        public float zEltolas { get; set; } = 0;
 
         private GL Gl;
 

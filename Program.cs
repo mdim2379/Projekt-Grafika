@@ -178,10 +178,23 @@ namespace Projekt
             // make sure it is threadsafe
             // NO GL calls
             cubeArrangementModel.AdvanceTime(deltaTime);
-            if (KeyStateTracker.IsKeyDown(Key.Left))
+            if (KeyStateTracker.IsKeyDown(Key.D))
             {
-                Console.WriteLine("fasd");
+                glSphere[0].xEltolas += 0.1f;
             }
+            if (KeyStateTracker.IsKeyDown(Key.W))
+            {
+                glSphere[0].zEltolas -= 0.1f;
+            }
+            if (KeyStateTracker.IsKeyDown(Key.S))
+            {
+                glSphere[0].zEltolas += 0.1f;
+            }
+            if (KeyStateTracker.IsKeyDown(Key.A))
+            {
+                glSphere[0].xEltolas -= 0.1f;
+            }
+            
         }
 
         private static unsafe void Window_Render(double deltaTime)
@@ -218,7 +231,7 @@ namespace Projekt
             
             DrawSphere(0, 0 ,0);
             
-            for (int i = 0; i < 10; i++) {
+            for (int i = 1; i < 10; i++) {
                 float y = -180.0f/2 + (i + 0.5f) * (180.0f / 10);
                 float x = -180.0f/2 + 5 + eltolas[i];
                 DrawSphere(i, x, y);
@@ -257,9 +270,9 @@ namespace Projekt
             CheckError();
         }
 
-        private static unsafe void DrawSphere(int i, float x, float y)
+        private static unsafe void DrawSphere(int i, float x, float z)
         {
-            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x + glSphere[i].xEltolas, 5f, y + glSphere[i].yEltolas);
+            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x + glSphere[i].xEltolas, 5f, z + glSphere[i].zEltolas);
             SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(glSphere[i].Vao);
 
