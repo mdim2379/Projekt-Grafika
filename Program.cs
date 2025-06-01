@@ -10,6 +10,8 @@ namespace Projekt
 {
     internal static class Program
     {
+        private static float[] height = new float[10];
+        
         private static bool renderelt = false;
         
         private static int camera = 0;
@@ -46,6 +48,9 @@ namespace Projekt
         private static float Shininess = 50;
 
         private static bool DrawWireFrameOnly = false;
+        
+        private static Vector3[] velocities = new Vector3[10];
+        private static bool[] hasBeenHit = new bool[10];
 
         private const string ModelMatrixVariableName = "uModel";
         private const string NormalMatrixVariableName = "uNormal";
@@ -115,6 +120,8 @@ namespace Projekt
 
             for (int i = 0; i < 10; i++)
                 eltolas[i] = random.Next(180 - 2 * 5);
+            for (int i = 0; i < 10; i++)
+                height[i] = 5f;
         }
 
         public static class KeyStateTracker
@@ -221,12 +228,31 @@ namespace Projekt
             if (renderelt)
             {
                 for (int i = 1; i < 10; i++)
-                    if (dist(glSphere[0].position, glSphere[i].position) < 10f)
+                {
+                    if (!hasBeenHit[i] && dist(glSphere[0].position, glSphere[i].position) < 10f)
                     {
-                        Console.WriteLine(glSphere[0].position);
-                        Console.WriteLine(glSphere[i].position);
-                        Console.WriteLine(i);
+                        
+                        Random rand = new Random();
+                        float x = (float)(rand.NextDouble() * 2 - 1);
+                        float z = (float)(rand.NextDouble() * 2 - 1);
+                        Vector3 direction = Vector3.Normalize(new Vector3(x, 1, z));
+
+                        velocities[i] = direction * 150f;
+                        hasBeenHit[i] = true;
                     }
+                }
+
+                for (int i = 1; i < 10; i++)
+                {
+                    if (hasBeenHit[i])
+                    {
+                        float dt = (float)deltaTime;
+                        glSphere[i].xEltolas += velocities[i].X * dt;
+                        height[i] += velocities[i].Y * dt;
+                        glSphere[i].zEltolas += velocities[i].Z * dt;
+                        
+                    }
+                }
             }
         }
 
@@ -250,8 +276,7 @@ namespace Projekt
                 Gl.Enable(EnableCap.LineSmooth);
                 Gl.LineWidth(0.5f);
             }
-
-
+            
             Gl.UseProgram(program);
 
             SetViewMatrix();
@@ -283,7 +308,7 @@ namespace Projekt
                 }
             }
             
-            ImGuiNET.ImGui.End();
+            ImGui.End();
             controller.Render();
             renderelt = true;
         }
@@ -318,7 +343,7 @@ namespace Projekt
         private static unsafe void DrawSphere(int i, float x, float z)
         {
             glSphere[i].position = new Vector2D<double>(x + glSphere[i].xEltolas, z + glSphere[i].zEltolas);
-            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x + glSphere[i].xEltolas, 5f, z + glSphere[i].zEltolas);
+            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x + glSphere[i].xEltolas, height[i], z + glSphere[i].zEltolas);
             SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(glSphere[i].Vao);
 

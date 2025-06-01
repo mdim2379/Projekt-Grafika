@@ -15,6 +15,9 @@ namespace Projekt
 
         public float xEltolas { get; set; } = 0;
         public float zEltolas { get; set; } = 0;
+        public float xVel { get; set; } = 0;
+        public float yVel { get; set; } = 0;
+        public float zVel { get; set; } = 0;
         
         public Vector2D<double> position { get; set; } = new Vector2D<double>(0, 0); 
 
