@@ -197,6 +197,14 @@ namespace Projekt
             if (camera == 1)
             {
                 cam3rd.GroundPosition = glSphere[0].position;
+                if (KeyStateTracker.IsKeyDown(Key.Left))
+                {
+                    cam3rd.OrbitAroundPoint(new Vector3D<double>(glSphere[0].position.X, 0f, glSphere[0].position.Y), 0.01f);
+                }
+                if (KeyStateTracker.IsKeyDown(Key.Right))
+                {
+                    cam3rd.OrbitAroundPoint(new Vector3D<double>(glSphere[0].position.X, 0f, glSphere[0].position.Y), -0.01f);
+                }
             }
         }
 
@@ -286,7 +294,7 @@ namespace Projekt
 
         private static unsafe void DrawSphere(int i, float x, float z)
         {
-            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x + glSphere[i].xEltolas, 5f, z + glSphere[i].zEltolas - 50f);
+            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x + glSphere[i].xEltolas, 5f, z + glSphere[i].zEltolas);
             SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(glSphere[i].Vao);
 

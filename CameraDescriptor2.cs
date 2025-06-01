@@ -74,6 +74,17 @@ namespace Projekt
                 return new Vector3D<float>((float)lookAtX, (float)_position.Y, (float)lookAtZ);
             }
         }
+        public void OrbitAroundPoint(Vector3D<double> centerPoint, double deltaAngle)
+        {
+            // Update the view angle
+            _viewAngle += deltaAngle;
+    
+            // Calculate new position based on angle and distance
+            _position.X = centerPoint.X + _viewDistance * Math.Sin(_viewAngle);
+            _position.Z = centerPoint.Z + _viewDistance * Math.Cos(_viewAngle);
+            // Keep the same height
+            _position.Y = centerPoint.Y + _position.Y; // Or set specific height
+        }
 
         // Movement methods
         public void MoveForward(double distance)
