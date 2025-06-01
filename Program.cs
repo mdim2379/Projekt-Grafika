@@ -10,6 +10,7 @@ namespace Projekt
 {
     internal static class Program
     {
+        private static float[] bounceTime = new float[10];
         private static float[] height = new float[10];
         
         private static bool renderelt = false;
@@ -227,6 +228,16 @@ namespace Projekt
 
             if (renderelt)
             {
+                float bounceSpeed = 3f;
+                float bounceAmplitude = 5f;
+                float groundHeight = 5f;
+                for (int i = 1; i < 10; i++)
+                {
+                    bounceTime[i] += (float)deltaTime;
+                    float bounce = Math.Abs((float)Math.Sin(bounceTime[i] * bounceSpeed));
+                    height[i] = groundHeight + bounce * bounceAmplitude;
+                }
+
                 for (int i = 1; i < 10; i++)
                 {
                     if (!hasBeenHit[i] && dist(glSphere[0].position, glSphere[i].position) < 10f)
@@ -356,8 +367,8 @@ namespace Projekt
         private static unsafe void DrawGoose()
         {
             var scale = Matrix4X4.CreateScale(50f);
-            float orbitRadius = 3f;
-            float orbitHeight = 2f;
+            float orbitRadius = 1f;
+            float orbitHeight = 1f;
             float orbitSpeed = (float)cubeArrangementModel.CenterCubeOrbitAngle;
 
             float orbitX = orbitRadius * (float)Math.Sin(orbitSpeed * (float)Math.PI / 180.0f);
@@ -494,7 +505,8 @@ namespace Projekt
             float[] face5Color = [0.0f, 1.0f, 1.0f, 1.0f];
             float[] face6Color = [1.0f, 1.0f, 0.0f, 1.0f];
 
-            teapot = ObjLoader.CreateFromObj(Gl, "Projekt.Resources.goose.obj", "Projekt.Resources.goose.png");
+            teapot = ObjLoader.CreateTeapotWithColor(Gl, face1Color);
+            // teapot = ObjLoader.CreateFromObj(Gl, "Projekt.Resources.goose.obj", "Projekt.Resources.goose.png");
 
             float[] tableColor = [System.Drawing.Color.Ivory.R/256f,
                                   System.Drawing.Color.Ivory.G/256f,
