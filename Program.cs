@@ -1,4 +1,5 @@
-﻿using ImGuiNET;
+﻿using System.Numerics;
+using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -9,10 +10,12 @@ namespace Projekt
 {
     internal static class Program
     {
+        private static bool renderelt = false;
+        
         private static int camera = 0;
-        
+
         private static Random random = new();
-        
+
         private static CameraDescriptor camPan = new();
         private static CameraDescriptor2 cam3rd = new();
 
@@ -37,7 +40,7 @@ namespace Projekt
         private static GlCube skyBox;
 
         private static GlObject[] glSphere = new GlObject[10];
-        
+
         private static int[] eltolas = new int[10];
 
         private static float Shininess = 50;
@@ -56,7 +59,15 @@ namespace Projekt
         private const string ViewPosVariableName = "viewPos";
         private const string ShininessVariableName = "shininess";
 
-        static void Main(string[] args)
+        public static double dist(Vector2D<double> x, Vector2D<double> y)
+        {
+            double dx = x.X - y.X;
+            double dy = x.Y - y.Y;
+            
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
+
+    static void Main(string[] args)
         {
             WindowOptions windowOptions = WindowOptions.Default;
             windowOptions.Title = "Balls bonzana";
@@ -206,6 +217,17 @@ namespace Projekt
                     cam3rd.OrbitAroundPoint(new Vector3D<double>(glSphere[0].position.X, 0f, glSphere[0].position.Y), -0.01f);
                 }
             }
+
+            if (renderelt)
+            {
+                for (int i = 1; i < 10; i++)
+                    if (dist(glSphere[0].position, glSphere[i].position) < 10f)
+                    {
+                        Console.WriteLine(glSphere[0].position);
+                        Console.WriteLine(glSphere[i].position);
+                        Console.WriteLine(i);
+                    }
+            }
         }
 
         private static unsafe void Window_Render(double deltaTime)
@@ -263,6 +285,7 @@ namespace Projekt
             
             ImGuiNET.ImGui.End();
             controller.Render();
+            renderelt = true;
         }
 
         private static unsafe void DrawSkyBox()
@@ -294,6 +317,7 @@ namespace Projekt
 
         private static unsafe void DrawSphere(int i, float x, float z)
         {
+            glSphere[i].position = new Vector2D<double>(x + glSphere[i].xEltolas, z + glSphere[i].zEltolas);
             Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x + glSphere[i].xEltolas, 5f, z + glSphere[i].zEltolas);
             SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(glSphere[i].Vao);
