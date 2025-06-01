@@ -13,7 +13,8 @@ namespace Projekt
         
         private static Random random = new();
         
-        private static CameraDescriptor[] cams = new CameraDescriptor[2];
+        private static CameraDescriptor camPan = new();
+        private static CameraDescriptor2 cam3rd = new();
 
         private static CubeArrangementModel cubeArrangementModel = new();
 
@@ -103,9 +104,6 @@ namespace Projekt
 
             for (int i = 0; i < 10; i++)
                 eltolas[i] = random.Next(180 - 2 * 5);
-
-            cams[0] = new CameraDescriptor();
-            cams[1] = new CameraDescriptor();
         }
 
         public static class KeyStateTracker
@@ -178,21 +176,28 @@ namespace Projekt
             cubeArrangementModel.AdvanceTime(deltaTime);
             if (KeyStateTracker.IsKeyDown(Key.D))
             {
-                glSphere[0].xEltolas += 0.1f;
+                glSphere[0].xEltolas += 0.2f;
+                glSphere[0].position += new Vector2D<double>(0.2f, 0f); 
             }
             if (KeyStateTracker.IsKeyDown(Key.W))
             {
-                glSphere[0].zEltolas -= 0.1f;
+                glSphere[0].zEltolas -= 0.2f;
+                glSphere[0].position += new Vector2D<double>(0f, -0.2f); 
             }
             if (KeyStateTracker.IsKeyDown(Key.S))
             {
-                glSphere[0].zEltolas += 0.1f;
+                glSphere[0].zEltolas += 0.2f;
+                glSphere[0].position += new Vector2D<double>(0f, 0.2f); 
             }
             if (KeyStateTracker.IsKeyDown(Key.A))
             {
-                glSphere[0].xEltolas -= 0.1f;
+                glSphere[0].xEltolas -= 0.2f;
+                glSphere[0].position += new Vector2D<double>(-0.2f, 0f); 
             }
-            
+            if (camera == 1)
+            {
+                cam3rd.GroundPosition = glSphere[0].position;
+            }
         }
 
         private static unsafe void Window_Render(double deltaTime)
@@ -247,8 +252,7 @@ namespace Projekt
                     camera = 0;
                 }
             }
-
-            cams[1].DistanceToOrigin = 100;
+            
             ImGuiNET.ImGui.End();
             controller.Render();
         }
@@ -282,7 +286,7 @@ namespace Projekt
 
         private static unsafe void DrawSphere(int i, float x, float z)
         {
-            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x + glSphere[i].xEltolas, 5f, z + glSphere[i].zEltolas);
+            Matrix4X4<float> modelMatrix = Matrix4X4.CreateTranslation(x + glSphere[i].xEltolas, 5f, z + glSphere[i].zEltolas - 50f);
             SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(glSphere[i].Vao);
 
@@ -369,7 +373,15 @@ namespace Projekt
                 throw new Exception($"{ViewPosVariableName} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, cams[camera].Position.X, cams[camera].Position.Y, cams[camera].Position.Z);
+            if (camera == 0)
+            {
+                Gl.Uniform3(location, camPan.Position.X, camPan.Position.Y, camPan.Position.Z);
+            }
+            else
+            {
+                Gl.Uniform3(location, cam3rd.Position.X, cam3rd.Position.Y, cam3rd.Position.Z);
+            }
+
             CheckError();
         }
 
@@ -463,7 +475,15 @@ namespace Projekt
 
         private static unsafe void SetViewMatrix()
         {
-            var viewMatrix = Matrix4X4.CreateLookAt(cams[camera].Position, cams[camera].Target, cams[camera].UpVector);
+            Matrix4X4<float> viewMatrix;
+            if (camera == 0)
+            {
+                viewMatrix = Matrix4X4.CreateLookAt(camPan.Position, camPan.Target, camPan.UpVector);
+            }
+            else
+            {
+                viewMatrix = Matrix4X4.CreateLookAt(cam3rd.Position, cam3rd.Target, cam3rd.UpVector);
+            }
             int location = Gl.GetUniformLocation(program, ViewMatrixVariableName);
 
             if (location == -1)

@@ -5,11 +5,9 @@ namespace Projekt
     internal class CameraDescriptor
     {
         public double DistanceToOrigin { get; set; } = 200;
+        public double AngleToZYPlane { get; set; } = 0;
+        public double AngleToZXPlane { get; set; } = Math.PI / 2;
         
-        private double AngleToZYPlane = 0;
-
-        private double AngleToZXPlane = Math.PI / 2;
-
         private const double DistanceScaleFactor = 1.1;
 
         private const double AngleChangeStepSize = Math.PI / 180 * 5;
