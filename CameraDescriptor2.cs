@@ -6,11 +6,11 @@ namespace Projekt
     internal class CameraDescriptor2
     {
         private Vector3D<double> _position = new Vector3D<double>(0, 15, 0);
-        private double _viewDistance = 10; // How far ahead the camera looks
-        private double _viewAngle = Math.PI; // Rotation around Y axis (in radians)
+        private double _viewDistance = 10;
+        private double _viewAngle = Math.PI;
         
         private const double DistanceScaleFactor = 1.1;
-        private const double AngleChangeStepSize = Math.PI / 180 * 5; // 5 degrees in radians
+        private const double AngleChangeStepSize = Math.PI / 180 * 5;
 
         /// <summary>
         /// Gets or sets the camera's XZ position (ground position)
