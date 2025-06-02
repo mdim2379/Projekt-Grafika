@@ -289,7 +289,9 @@ namespace Projekt
             }
             
             Gl.UseProgram(program);
-
+            int texLocation = Gl.GetUniformLocation(program, "uTexture");
+            Gl.Uniform1(texLocation, 0);
+            
             SetViewMatrix();
             SetProjectionMatrix();
 
@@ -305,7 +307,10 @@ namespace Projekt
                 float x = -180.0f/2 + 5 + eltolas[i];
                 DrawSphere(i, x, y);
             }
-
+            SetLightColor();
+            SetLightPosition();
+            SetViewerPosition();
+            SetShininess();
             DrawGoose();
             
             DrawSkyBox();
@@ -395,6 +400,8 @@ namespace Projekt
             SetModelMatrix(orbit * bodyRotation * bankRotation * scale);
 
             Gl.BindVertexArray(teapot.Vao);
+            Gl.ActiveTexture(TextureUnit.Texture0);
+            Gl.BindTexture(TextureTarget.Texture2D, teapot.TextureId);
             Gl.DrawElements(GLEnum.Triangles, teapot.IndexArrayLength, GLEnum.UnsignedInt, null);
             Gl.BindVertexArray(0);
 
@@ -505,8 +512,7 @@ namespace Projekt
             float[] face5Color = [0.0f, 1.0f, 1.0f, 1.0f];
             float[] face6Color = [1.0f, 1.0f, 0.0f, 1.0f];
 
-            teapot = ObjLoader.CreateTeapotWithColor(Gl, face1Color);
-            // teapot = ObjLoader.CreateFromObj(Gl, "Projekt.Resources.goose.obj", "Projekt.Resources.goose.png");
+            teapot = ObjWithTextureLoader.LoadFromResources(Gl, "Projekt.Resources.goose.obj", "Projekt.Resources.goose.png");
 
             float[] tableColor = [System.Drawing.Color.Ivory.R/256f,
                                   System.Drawing.Color.Ivory.G/256f,

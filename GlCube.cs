@@ -8,7 +8,7 @@ namespace Projekt
         public uint? Texture { get; private set; }
 
         private GlCube(uint vao, uint vertices, uint colors, uint indeces, uint indexArrayLength, GL gl, uint texture = 0)
-            : base(vao, vertices, colors, indeces, indexArrayLength, gl)
+            : base(vao, vertices, colors, indeces, indexArrayLength, gl, GlObject.Tex0(gl))
         {
             Texture = texture;
         }

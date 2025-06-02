@@ -1,187 +1,158 @@
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using System.Globalization;
 
 namespace Projekt
 {
-    internal class ObjLoader
+    internal class ObjWithTextureLoader
     {
-        public static unsafe GlObject CreateTeapotWithColor(GL Gl, float[] faceColor)
+        public static unsafe GlObject LoadFromResources(GL gl, string objResourceName, string textureResourceName)
         {
-            uint vao = Gl.GenVertexArray();
-            Gl.BindVertexArray(vao);
+            List<Vector3D<float>> objVertices = new();
+            List<Vector3D<float>> objNormals = new();
+            List<Vector2D<float>> objTexCoords = new();
+            List<(int v, int t, int n)[]> objFaces = new();
 
-            List<float[]> objVertices;
-            List<float[]> objNormals;
-            List<int[]> objFaces;
-
-            ReadObjDataForTeapot(out objVertices, out objNormals, out objFaces);
-
-            List<float> glVertices = new List<float>();
-            List<float> glColors = new List<float>();
-            List<uint> glIndices = new List<uint>();
-
-            CreateGlArraysFromObjArrays(faceColor, objVertices, objNormals, objFaces, glVertices, glColors, glIndices);
-
-            return CreateOpenGlObject(Gl, vao, glVertices, glColors, glIndices);
-        }
-
-        private static unsafe GlObject CreateOpenGlObject(GL Gl, uint vao, List<float> glVertices, List<float> glColors,
-            List<uint> glIndices)
-        {
-            uint offsetPos = 0;
-            uint offsetNormal = offsetPos + (3 * sizeof(float));
-            uint vertexSize = offsetNormal + (3 * sizeof(float));
-
-            uint vertices = Gl.GenBuffer();
-            Gl.BindBuffer(GLEnum.ArrayBuffer, vertices);
-            Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)glVertices.ToArray().AsSpan(), GLEnum.StaticDraw);
-            Gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, vertexSize, (void*)offsetPos);
-            Gl.EnableVertexAttribArray(0);
-
-            Gl.EnableVertexAttribArray(2);
-            Gl.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, vertexSize, (void*)offsetNormal);
-
-            uint colors = Gl.GenBuffer();
-            Gl.BindBuffer(GLEnum.ArrayBuffer, colors);
-            Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)glColors.ToArray().AsSpan(), GLEnum.StaticDraw);
-            Gl.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 0, null);
-            Gl.EnableVertexAttribArray(1);
-
-            uint indices = Gl.GenBuffer();
-            Gl.BindBuffer(GLEnum.ElementArrayBuffer, indices);
-            Gl.BufferData(GLEnum.ElementArrayBuffer, (ReadOnlySpan<uint>)glIndices.ToArray().AsSpan(),
-                GLEnum.StaticDraw);
-
-            // release array buffer
-            Gl.BindBuffer(GLEnum.ArrayBuffer, 0);
-            uint indexArrayLength = (uint)glIndices.Count;
-
-            return new GlObject(vao, vertices, colors, indices, indexArrayLength, Gl);
-        }
-
-        private static unsafe void CreateGlArraysFromObjArrays(
-            float[] faceColor,
-            List<float[]> objVertices,
-            List<float[]> objNormals,
-            List<int[]> objFaces,
-            List<float> glVertices,
-            List<float> glColors,
-            List<uint> glIndices)
-        {
-            Dictionary<string, int> glVertexIndices = new Dictionary<string, int>();
-
-            foreach (var objFace in objFaces)
+            using (Stream? objStream = typeof(ObjWithTextureLoader).Assembly.GetManifestResourceStream(objResourceName))
+            using (StreamReader sr =
+                   new(objStream ?? throw new InvalidOperationException($"Missing resource: {objResourceName}")))
             {
-                // process 3 vertices
-                for (int i = 0; i < objFace.Length; ++i)
+                string? line;
+                while ((line = sr.ReadLine()) != null)
                 {
-                    // OBJ face format: vertex_index/texture_index/normal_index
-                    var faceIndices = objFace[i].ToString().Split('/');
-                    int vertexIndex = int.Parse(faceIndices[0]) - 1;
-                    int normalIndex = faceIndices.Length > 2 && !string.IsNullOrEmpty(faceIndices[2])
-                        ? int.Parse(faceIndices[2]) - 1
-                        : -1;
+                    line = line.Trim();
+                    if (line.StartsWith("#") || string.IsNullOrWhiteSpace(line)) continue;
 
-                    var objVertex = objVertices[vertexIndex];
-                    float[] normal;
-
-                    if (normalIndex >= 0 && normalIndex < objNormals.Count)
-                    {
-                        // Use the normal from the OBJ file
-                        normal = objNormals[normalIndex];
-                    }
-                    else
-                    {
-                        // Fallback: calculate normal from face vertices
-                        var aObjVertex = objVertices[int.Parse(objFace[0].ToString().Split('/')[0]) - 1];
-                        var a = new Vector3D<float>(aObjVertex[0], aObjVertex[1], aObjVertex[2]);
-                        var bObjVertex = objVertices[int.Parse(objFace[1].ToString().Split('/')[0]) - 1];
-                        var b = new Vector3D<float>(bObjVertex[0], bObjVertex[1], bObjVertex[2]);
-                        var cObjVertex = objVertices[int.Parse(objFace[2].ToString().Split('/')[0]) - 1];
-                        var c = new Vector3D<float>(cObjVertex[0], cObjVertex[1], cObjVertex[2]);
-
-                        var calculatedNormal = Vector3D.Normalize(Vector3D.Cross(b - a, c - a));
-                        normal = new float[] { calculatedNormal.X, calculatedNormal.Y, calculatedNormal.Z };
-                    }
-
-                    // create gl description of vertex
-                    List<float> glVertex = new List<float>();
-                    glVertex.AddRange(objVertex);
-                    glVertex.AddRange(normal);
-
-                    // add textrure, color if needed
-
-                    // check if vertex exists
-                    var glVertexStringKey = string.Join(" ", glVertex);
-                    if (!glVertexIndices.ContainsKey(glVertexStringKey))
-                    {
-                        glVertices.AddRange(glVertex);
-                        glColors.AddRange(faceColor);
-                        glVertexIndices.Add(glVertexStringKey, glVertexIndices.Count);
-                    }
-
-                    glIndices.Add((uint)glVertexIndices[glVertexStringKey]);
-                }
-            }
-        }
-
-        private static unsafe void ReadObjDataForTeapot(
-            out List<float[]> objVertices,
-            out List<float[]> objNormals,
-            out List<int[]> objFaces)
-        {
-            objVertices = new List<float[]>();
-            objNormals = new List<float[]>();
-            objFaces = new List<int[]>();
-
-            using (Stream objStream =
-                   typeof(ObjLoader).Assembly.GetManifestResourceStream("Projekt.Resources.goose.obj"))
-            using (StreamReader objReader = new StreamReader(objStream))
-            {
-                while (!objReader.EndOfStream)
-                {
-                    var line = objReader.ReadLine()?.Trim();
-
-                    if (String.IsNullOrEmpty(line) || line.StartsWith("#"))
-                        continue;
-
-                    // Find the first space safely
-                    int spaceIndex = line.IndexOf(' ');
-                    if (spaceIndex < 0)
-                        continue; // Skip lines without any space
-
-                    var lineClassifier = line.Substring(0, spaceIndex);
-                    var lineData = line.Substring(spaceIndex).Trim()
-                        .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-                    switch (lineClassifier)
+                    string[] parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    switch (parts[0])
                     {
                         case "v":
-                            float[] vertex = new float[3];
-                            for (int i = 0; i < vertex.Length && i < lineData.Length; ++i)
-                                vertex[i] = float.Parse(lineData[i]);
-                            objVertices.Add(vertex);
+                            objVertices.Add(new Vector3D<float>(
+                                float.Parse(parts[1], CultureInfo.InvariantCulture),
+                                float.Parse(parts[2], CultureInfo.InvariantCulture),
+                                float.Parse(parts[3], CultureInfo.InvariantCulture)));
+                            break;
+                        case "vt":
+                            objTexCoords.Add(new Vector2D<float>(
+                                float.Parse(parts[1], CultureInfo.InvariantCulture),
+                                1 - float.Parse(parts[2], CultureInfo.InvariantCulture))); // Flip V
                             break;
                         case "vn":
-                            float[] normal = new float[3];
-                            for (int i = 0; i < normal.Length && i < lineData.Length; ++i)
-                                normal[i] = float.Parse(lineData[i]);
-                            objNormals.Add(normal);
+                            objNormals.Add(new Vector3D<float>(
+                                float.Parse(parts[1], CultureInfo.InvariantCulture),
+                                float.Parse(parts[2], CultureInfo.InvariantCulture),
+                                float.Parse(parts[3], CultureInfo.InvariantCulture)));
                             break;
                         case "f":
-                            int[] face = new int[3];
-                            for (int i = 0; i < face.Length && i < lineData.Length; ++i)
-                            {
-                                var faceParts = lineData[i].Split('/');
-                                if (faceParts.Length > 0 && !string.IsNullOrEmpty(faceParts[0]))
-                                    face[i] = int.Parse(faceParts[0]);
-                            }
-
+                            var face = parts[1..4]
+                                .Select(p =>
+                                {
+                                    var indices = p.Split('/');
+                                    return (
+                                        int.Parse(indices[0]) - 1,
+                                        indices.Length > 1 && !string.IsNullOrEmpty(indices[1])
+                                            ? int.Parse(indices[1]) - 1
+                                            : -1,
+                                        indices.Length > 2 && !string.IsNullOrEmpty(indices[2])
+                                            ? int.Parse(indices[2]) - 1
+                                            : -1
+                                    );
+                                }).ToArray();
                             objFaces.Add(face);
                             break;
                     }
                 }
             }
+
+            List<float> interleaved = new();
+            List<uint> indices = new();
+            Dictionary<string, uint> uniqueVertices = new();
+
+            foreach (var face in objFaces)
+            {
+                foreach (var (v, t, n) in face)
+                {
+                    string key = $"{v}/{t}/{n}";
+                    if (!uniqueVertices.ContainsKey(key))
+                    {
+                        Vector3D<float> vertex = objVertices[v];
+                        Vector2D<float> tex = (t >= 0) ? objTexCoords[t] : new(0, 0);
+                        Vector3D<float> norm = (n >= 0) ? objNormals[n] : new(0, 0, 1);
+
+                        interleaved.AddRange([vertex.X, vertex.Y, vertex.Z]);
+                        interleaved.AddRange([tex.X, tex.Y]);
+                        interleaved.AddRange([norm.X, norm.Y, norm.Z]);
+
+                        uniqueVertices[key] = (uint)(interleaved.Count / 8 - 1);
+                    }
+
+                    indices.Add(uniqueVertices[key]);
+                }
+            }
+
+            uint vao = gl.GenVertexArray();
+            gl.BindVertexArray(vao);
+
+            uint vbo = gl.GenBuffer();
+            gl.BindBuffer(GLEnum.ArrayBuffer, vbo);
+            fixed (float* data = interleaved.ToArray())
+            {
+                gl.BufferData(GLEnum.ArrayBuffer, (nuint)(interleaved.Count * sizeof(float)), data, GLEnum.StaticDraw);
+            }
+
+            int stride = 8 * sizeof(float);
+            gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, (uint)stride, (void*)0);
+            gl.EnableVertexAttribArray(0);
+
+            gl.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, (uint)stride,
+                (void*)(3 * sizeof(float)));
+            gl.EnableVertexAttribArray(1);
+
+            gl.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, (uint)stride,
+                (void*)(5 * sizeof(float)));
+            gl.EnableVertexAttribArray(2);
+
+            uint ebo = gl.GenBuffer();
+            gl.BindBuffer(GLEnum.ElementArrayBuffer, ebo);
+            fixed (uint* idx = indices.ToArray())
+            {
+                gl.BufferData(GLEnum.ElementArrayBuffer, (nuint)(indices.Count * sizeof(uint)), idx, GLEnum.StaticDraw);
+            }
+
+            uint textureId = LoadEmbeddedTexture(gl, textureResourceName);
+
+            return new GlObject(vao, vbo, 0, ebo, (uint)indices.Count, gl, textureId);
+        }
+
+        private static unsafe uint LoadEmbeddedTexture(GL gl, string textureResourceName)
+        {
+            using Stream? stream = typeof(ObjWithTextureLoader).Assembly.GetManifestResourceStream(textureResourceName);
+            if (stream == null)
+                throw new InvalidOperationException($"Texture resource '{textureResourceName}' not found.");
+
+            using Image<Rgba32> image = Image.Load<Rgba32>(stream);
+            image.Mutate(x => x.Flip(FlipMode.Vertical));
+            var pixels = new byte[4 * image.Width * image.Height];
+            image.CopyPixelDataTo(pixels);
+
+            fixed (void* data = pixels)
+            {
+                uint texture = gl.GenTexture();
+                gl.BindTexture(TextureTarget.Texture2D, texture);
+                gl.TexImage2D(TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba, (uint)image.Width,
+                    (uint)image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, data);
+
+                gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
+                gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+                // gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+                // gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+                // gl.GenerateMipmap(TextureTarget.Texture2D);
+                return texture;
+            }
         }
     }
+
 }

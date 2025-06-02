@@ -15,34 +15,30 @@ namespace Projekt
 
         public float xEltolas { get; set; } = 0;
         public float zEltolas { get; set; } = 0;
-        public float xVel { get; set; } = 0;
-        public float yVel { get; set; } = 0;
-        public float zVel { get; set; } = 0;
-        
         public Vector2D<double> position { get; set; } = new Vector2D<double>(0, 0); 
 
         private GL Gl;
 
-        public GlObject(uint vao, uint vertices, uint colors, uint indeces, uint indexArrayLength, GL gl)
+        public GlObject(uint vao, uint vertices, uint colors, uint indeces, uint indexArrayLength, GL gl, uint texId)
         {
             this.Vao = vao;
             this.Vertices = vertices;
             this.Colors = colors;
             this.Indices = indeces;
             this.IndexArrayLength = indexArrayLength;
+            this.TextureId = texId;
             this.Gl = gl;
         }
 
         internal void ReleaseGlObject()
         {
-            // always unbound the vertex buffer first, so no halfway results are displayed by accident
             Gl.DeleteBuffer(Vertices);
             Gl.DeleteBuffer(Colors);
             Gl.DeleteBuffer(Indices);
             Gl.DeleteVertexArray(Vao);
         }
 
-        private static unsafe GlObject CreateGlObjectFromVertexDescriptions(GL Gl, List<float> vertexDescriptionList, List<float> colorsList, List<uint> triangleIndices)
+        private static unsafe GlObject CreateGlObjectFromVertexDescriptions(GL Gl, List<float> vertexDescriptionList, List<float> colorsList, List<uint> triangleIndices, uint texId)
         {
             uint vao = Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
@@ -74,7 +70,7 @@ namespace Projekt
             Gl.BindBuffer(GLEnum.ArrayBuffer, 0);
             uint indexArrayLength = (uint)triangleIndices.Count;
 
-            return new GlObject(vao, vertices, colors, indices, indexArrayLength, Gl);
+            return new GlObject(vao, vertices, colors, indices, indexArrayLength, Gl, texId);
         }
 
 
@@ -97,7 +93,7 @@ namespace Projekt
 
             CreateTrainglesOfUVMesh(get3DPointFromUV, sphereNormalCalculator, vertexDescription2IndexTable, vertexDescriptionList, colorsList, triangleIndices);
 
-            return CreateGlObjectFromVertexDescriptions(Gl, vertexDescriptionList, colorsList, triangleIndices);
+            return CreateGlObjectFromVertexDescriptions(Gl, vertexDescriptionList, colorsList, triangleIndices, Tex0(Gl));
         }
 
         private static unsafe void CreateTrainglesOfUVMesh(
@@ -130,6 +126,28 @@ namespace Projekt
             triangleIndices.Add((uint)vertexCIndex);
         }
 
+        internal static unsafe uint Tex0(GL gl)
+        {
+            const uint width = 1;
+            const uint height = 1;
+            var pixels = new byte[] { 0, 0, 0, 0xFF };
+
+            fixed (void* data = pixels)
+            {
+                uint texture = gl.GenTexture();
+                gl.BindTexture(TextureTarget.Texture2D, texture);
+                gl.TexImage2D(TextureTarget.Texture2D, 0, (int)InternalFormat.Rgba, (uint)width,
+                    (uint)height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, data);
+
+                gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
+                gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+                // gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+                // gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+                // gl.GenerateMipmap(TextureTarget.Texture2D);
+                return texture;
+            }
+        }
+
         private static unsafe int GetIndexForVertex(Dictionary<string, int> vertexDescription2IndexTable, List<float> vertexDescriptionList, Vector3D<float> vertex, List<float> colorsList, Func<double, double, Vector3D<float>, Vector3D<float>> calculateNormalAtVertex, double u, double v)
         {
             int vertexIndex = -1;
@@ -160,9 +178,9 @@ namespace Projekt
         private static Vector3D<float> GetSphereVertexPostion(float radius, double u, double v)
         {
             return new Vector3D<float>(
-                                    (float)(radius * Math.Cos(GetAlphaFromU(u)) * Math.Cos(GetBetaFromV(v))),
-                                    (float)(radius * Math.Sin(GetAlphaFromU(u))),
-                                    (float)(radius * Math.Cos(GetAlphaFromU(u)) * Math.Sin(GetBetaFromV(v))));
+                (float)(radius * Math.Cos(GetAlphaFromU(u)) * Math.Cos(GetBetaFromV(v))),
+                (float)(radius * Math.Sin(GetAlphaFromU(u))),
+                (float)(radius * Math.Cos(GetAlphaFromU(u)) * Math.Sin(GetBetaFromV(v))));
         }
 
         private static double GetBetaFromV(double v)

@@ -14,6 +14,9 @@ out vec3 outNormal;
 out vec3 outWorldPosition;
 out vec2 outTex;
 
+layout(location = 1) in vec2 aTexCoord;
+out vec2 TexCoord;
+
 
 void main()
 {
@@ -22,4 +25,5 @@ void main()
     gl_Position = uProjection*uView*uModel*vec4(vPos.x, vPos.y, vPos.z, 1.0);
     outNormal = uNormal*vNorm;
     outWorldPosition = vec3(uModel*vec4(vPos.x, vPos.y, vPos.z, 1.0));
+    TexCoord = aTexCoord;
 }

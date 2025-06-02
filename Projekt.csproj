@@ -25,6 +25,8 @@
       <EmbeddedResource Include="Resources\goose.png" />
       <None Remove="Resources\goose.mtl" />
       <EmbeddedResource Include="Resources\goose.mtl" />
+      <None Remove="Resources\Untitled.png" />
+      <EmbeddedResource Include="Resources\Untitled.png" />
     </ItemGroup>
 
     <ItemGroup>
